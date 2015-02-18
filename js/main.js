@@ -36,10 +36,10 @@ $(function() {
 
         allTopoJson = topoData
         var myStyle = {
-            "color": "#06FF1A",
+            "color": "#06C7FF",
             "weight": 1,
             "opacity": 1,
-            "fillColor": "#06FF1A",
+            "fillColor": "#06C7FF",
             "fillOpacity": 0.1
 
         };
@@ -79,11 +79,11 @@ $(function() {
 })
 
 function handleLayer(layer) {
-    var randomValue = Math.random() * 0.5
+    
 
     layer.setStyle({
 
-        "fillOpacity": randomValue
+        "fillOpacity": 0.1
 
     });
 
@@ -97,6 +97,8 @@ function changeOptions() {
     d3.csv("data/prosecutions/prosecutions.csv", function(data) {
 
         addToMap(data)
+
+        group.removeLayer()
     });
 
 
@@ -107,23 +109,30 @@ function changeOptions() {
             lat = data[i]["lat"]
             lng = data[i]["lng"]
 
-            var pathOptions = {
-                "color": "#FF0606",
-                "weight": 0,
-                "opacity": 1,
-                "fillColor": "#FF0606",
-                "fillOpacity": 1,
-                "radius": 3
+            // var pathOptions = {
+            //     "color": "#FF0606",
+            //     "weight": 0,
+            //     "opacity": 1,
+            //     "fillColor": "#FF0606",
+            //     "fillOpacity": 1,
+            //     "radius": 3
 
-            };
+            // };
 
-            markerArray.push(L.circleMarker([lat, lng], pathOptions));
+            var redMarker = L.AwesomeMarkers.icon({
+               icon: 'android-hand',
+               markerColor: 'red',
+               prefix: "ion"
+             });
+
+
+            markerArray.push(L.marker([lat, lng],{icon:redMarker}));
 
         };
 
 
 
-        var group = L.featureGroup(markerArray).addTo(map);
+        group = L.featureGroup(markerArray).addTo(map);
         //map.fitBounds(group.getBounds());
 
     }
@@ -183,7 +192,7 @@ function changeSelectBox(authorityid) {
             if (layer.feature.id == authorityLookup[authorityid]["LAD13CD"]) {
               map.fitBounds(layer.getBounds());
               layer.setStyle({"opacity":1,"fillOpacity":0.3})
-              debugger;
+          
           
             } else {
               layer.setStyle({"opacity":0.3,"fillOpacity":0.1})
@@ -206,39 +215,68 @@ function changeSelectBox(authorityid) {
 
         for (var i = 0; i < data.length; i++) {
 
-            lat = data[i]["latitude"]
-            lng = data[i]["longitude"]
+            d = data[i]
+            lat = d["latitude"]
+            lng = d["longitude"]
+            rating = d["ratingvalue"]
+            businessname = d["businessname"]
 
             if (typeof lat === 'undefined') {
                 continue
             };
 
+            //Convert to numeric
             lat = lat + 0.0
             lng = lng + 0.0
 
-            var pathOptions = {
-                "color": "#0625FF",
-                "weight": 0,
-                "opacity": 1,
-                "fillColor": "#0625FF",
-                "fillOpacity": 1,
-                "radius": 3
+
+
+            style = {
+                    
+                        "color": "#0625FF",
+                        "weight": 0,
+                        "opacity": 1,
+                        "fillColor": getFillColour(rating),
+                        "fillOpacity": 1,
+                        "radius": 5
+
+                    };
+
+              function getFillColour(rating) {
+               
+
+                console.log(rating)
+                var color = d3.scale.linear()
+                    .domain([0,1,2,3,4,5])
+                    .range(["#868686","#E60000", "#FF7611", "#FDC400", "#B4E800", "#63FE05"]);
+
+                color = color(rating)
+                if (rating == "Exempt"){
+                  color = "#868686"
+                }
+                return color
+              }
+
+
+                  
+          
+                markerArray.push(L.circleMarker([lat, lng], style));
 
             };
 
-            markerArray.push(L.circleMarker([lat, lng], pathOptions));
-
-        };
 
 
+            var group = L.featureGroup(markerArray).addTo(map);
+            //map.fitBounds(group.getBounds());
+        }
 
-        var group = L.featureGroup(markerArray).addTo(map);
-        //map.fitBounds(group.getBounds());
+
     }
 
 
-}
+//TODO:
 
+//First, make sure the markers are coloured by the FHRS 
 
 //Can we make the map zoom to the location of the view on startup if they are geoenabled?
 
